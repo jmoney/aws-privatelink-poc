@@ -25,28 +25,38 @@ module "consumer_network" {
 
 module "echo_server" {
     source = "./modules/echo_server"
-    subnet_id = module.provider.subnet_ids["private"]["us-east-1a"]
-    vpc_id = module.provider.vpc_id
+    subnet_id = module.provider_network.subnet_ids["private"]["us-east-1a"]
+    vpc_id = module.provider_network.vpc_id
 }
 
 module "provider" {
     source = "./modules/provider"
-    subnet_ids = module.provider_network.subnet_ids["private"]
+    # TODO - grab all private subnets from the provider network
+    subnet_ids = [module.provider_network.subnet_ids["private"]["us-east-1a"], module.provider_network.subnet_ids["private"]["us-east-1b"]]
     instance_ip = module.echo_server.instance_ip
     cidr_block = var.provider_ingress_cidr_block
+}
+
+module "consumer" {
+    source = "./modules/consumer"
+
+    vpc_id = module.consumer_network.vpc_id
+    service_name = module.provider.service_name
+
 }
 
 #### Below is everything needed to access the consumer network via the public internet
 
 resource "aws_internet_gateway" "internet" {
-    vpc_id = module.consumer.vpc_id
+    vpc_id = module.consumer_network.vpc_id
 }
 
 resource "aws_lb" "public_lb" {
     name = "public-lb"
     internal = false
     load_balancer_type = "application"
-    subnets = module.consumer.subnet_ids["public"]
+    # TODO - grab all public subnets from the consumer network
+    subnets = [module.consumer_network.subnet_ids["public"]["us-east-1a"], module.consumer_network.subnet_ids["public"]["us-east-1b"]]
     enable_deletion_protection = false
     tags = {
         Name = "public-lb"
@@ -68,7 +78,7 @@ resource "aws_lb_target_group" "public_lb" {
     name = "public-lb"
     port = 80
     protocol = "HTTP"
-    vpc_id = module.consumer.vpc_id
+    vpc_id = module.consumer_network.vpc_id
 
     health_check {
         path = "/health"
@@ -82,7 +92,8 @@ resource "aws_lb_target_group" "public_lb" {
 }
 
 resource "aws_lb_target_group_attachment" "consumers" {
-    count = length(module.consumer.consumer_ips)
+    # TODO - map this to the consumer network availability zones
+    count = 3
     target_group_arn = aws_lb_target_group.public_lb.arn
     target_id = module.consumer.consumer_ips[count.index]
     port = 80

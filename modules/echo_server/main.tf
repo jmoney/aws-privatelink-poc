@@ -1,10 +1,18 @@
 data "aws_ami" "amazon_linux_2023" {
-    most_recent = true
-    owners = ["amazon"]
-    filter {
-        name = "name"
-        values = ["al2023-ami-minimal-kernel-default-x86_64"]
-    }
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-kernel-5.10-hvm-*-x86_64-gp2"] # Pattern may need adjustment for Amazon Linux 2023
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  # Ensure the AMI is owned by Amazon. You may need to adjust the owner ID for Amazon Linux 2023
+  owners = ["amazon"] 
 }
 
 data "aws_vpc" "vpc" {

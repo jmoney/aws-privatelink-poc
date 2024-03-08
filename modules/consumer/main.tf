@@ -1,3 +1,6 @@
+data "aws_vpc" "vpc" {
+  id = var.vpc_id
+}
 resource "aws_vpc_endpoint" "private_link_consumer" {
   vpc_id = var.vpc_id
   service_name = var.service_name

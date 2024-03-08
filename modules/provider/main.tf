@@ -1,4 +1,4 @@
-data "aws_subet" "subnet" {
+data "aws_subnet" "subnet" {
     id = var.subnet_ids[0]
 }
 
@@ -38,7 +38,6 @@ resource "aws_lb_target_group" "private_link_provider" {
   health_check {
     protocol = "TCP"
     port     = "9001"
-    path = "/http"
     interval = 30
     timeout  = 10
     healthy_threshold   = 3
