@@ -24,15 +24,13 @@ resource "aws_lb" "private_link_provider" {
     load_balancer_type = "network"
     subnets = var.subnet_ids
     enable_deletion_protection = false
-    tags = {
-        Name = "private-link-provider"
-    }
 }
 
 resource "aws_lb_target_group" "private_link_provider" {
   name     = "private-link-provider"
   port     = 80
   protocol = "TCP"
+  target_type = "ip"
   vpc_id   = data.aws_subnet.subnet.vpc_id
 
   health_check {
@@ -65,8 +63,4 @@ resource "aws_lb_listener" "private_link_provider" {
 resource "aws_vpc_endpoint_service" "private_link_provider" {
     network_load_balancer_arns = [aws_lb.private_link_provider.arn]
     acceptance_required = false
-
-    tags = {
-        Name = "private-link-provider"
-    }
 }

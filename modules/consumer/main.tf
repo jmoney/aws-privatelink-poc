@@ -1,11 +1,13 @@
 data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
+
 resource "aws_vpc_endpoint" "private_link_consumer" {
   vpc_id = var.vpc_id
   service_name = var.service_name
   vpc_endpoint_type = "Interface"
   security_group_ids = [aws_security_group.private_link_consumer.id]
+  subnet_ids = var.subnet_ids
 }
 
 resource "aws_security_group" "private_link_consumer" {

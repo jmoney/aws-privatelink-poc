@@ -9,6 +9,12 @@ terraform {
 
 provider "aws" {
     region = "us-east-1"
+
+    default_tags {
+        tags = {
+            Name = "private-link-poc"
+        }
+    }
 }
 
 locals {
@@ -35,17 +41,16 @@ module "echo_server" {
 
 module "provider" {
     source = "./modules/provider"
-    subnet_ids = [for az, subnet in module.consumer_network.subnet_ids["private"] : subnet]
+    subnet_ids = [for az, subnet in module.provider_network.subnet_ids["private"] : subnet]
     instance_ip = module.echo_server.instance_ip
     cidr_block = var.provider_ingress_cidr_block
 }
 
 module "consumer" {
     source = "./modules/consumer"
-
     vpc_id = module.consumer_network.vpc_id
     service_name = module.provider.service_name
-
+    subnet_ids = [for az, subnet in module.consumer_network.subnet_ids["private"] : subnet]   
 }
 
 #### Below is everything needed to access the consumer network via the public internet
@@ -60,9 +65,6 @@ resource "aws_lb" "public_lb" {
     load_balancer_type = "application"
     subnets = [for az, subnet in module.consumer_network.subnet_ids["public"] : subnet]
     enable_deletion_protection = false
-    tags = {
-        Name = "public-lb"
-    }
 }
 
 resource "aws_lb_listener" "public_lb" {
@@ -80,6 +82,7 @@ resource "aws_lb_target_group" "public_lb" {
     name = "public-lb"
     port = 80
     protocol = "HTTP"
+    target_type = "ip"
     vpc_id = module.consumer_network.vpc_id
 
     health_check {
@@ -93,9 +96,14 @@ resource "aws_lb_target_group" "public_lb" {
     }
 }
 
-resource "aws_lb_target_group_attachment" "consumers" {
+data "aws_network_interface" "consumer_network_interface" {
     count = length(local.availability_zones)
+    id = module.consumer.consumer_network_interface_ids[count.index]
+}
+
+resource "aws_lb_target_group_attachment" "consumers" {
+    count = length(data.aws_network_interface.consumer_network_interface)
     target_group_arn = aws_lb_target_group.public_lb.arn
-    target_id = module.consumer.consumer_ips[count.index]
+    target_id = data.aws_network_interface.consumer_network_interface[count.index].private_ip
     port = 80
 }

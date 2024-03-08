@@ -1,18 +1,17 @@
 data "aws_ami" "amazon_linux_2023" {
-  most_recent = true
+    most_recent = true
 
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-kernel-5.10-hvm-*-x86_64-gp2"] # Pattern may need adjustment for Amazon Linux 2023
-  }
+    owners      = ["amazon"]
 
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
+    filter {
+        name   = "name"
+        values = ["al2023-ami-2023.3.20240131.0-kernel-6.1-x86_64"] 
+    }
 
-  # Ensure the AMI is owned by Amazon. You may need to adjust the owner ID for Amazon Linux 2023
-  owners = ["amazon"] 
+    filter {
+        name   = "virtualization-type"
+        values = ["hvm"]
+    }
 }
 
 data "aws_vpc" "vpc" {
@@ -23,9 +22,6 @@ resource "aws_instance" "echo_server" {
     ami = data.aws_ami.amazon_linux_2023.id
     instance_type = "t2.micro"
     subnet_id = var.subnet_id
-    tags = {
-        Name = "echo-server"
-    }
     user_data = <<-EOF
                 #!/bin/bash
                 sudo yum update -y
