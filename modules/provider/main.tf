@@ -24,11 +24,12 @@ resource "aws_lb" "private_link_provider" {
     load_balancer_type = "network"
     subnets = var.subnet_ids
     enable_deletion_protection = false
+    enable_cross_zone_load_balancing = true
 }
 
 resource "aws_lb_target_group" "private_link_provider" {
   name     = "private-link-provider"
-  port     = 80
+  port     = 9001
   protocol = "TCP"
   target_type = "ip"
   vpc_id   = data.aws_subnet.subnet.vpc_id

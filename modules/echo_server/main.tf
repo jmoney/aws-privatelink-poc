@@ -1,13 +1,10 @@
 data "aws_ami" "amazon_linux_2023" {
     most_recent = true
-
     owners      = ["amazon"]
-
     filter {
         name   = "name"
         values = ["al2023-ami-2023.3.20240131.0-kernel-6.1-x86_64"] 
     }
-
     filter {
         name   = "virtualization-type"
         values = ["hvm"]
@@ -20,8 +17,9 @@ data "aws_vpc" "vpc" {
 
 resource "aws_instance" "echo_server" {
     ami = data.aws_ami.amazon_linux_2023.id
-    instance_type = "t2.micro"
+    instance_type = "t3.micro"
     subnet_id = var.subnet_id
+    security_groups = [aws_security_group.echo_server.id]
     user_data = <<-EOF
                 #!/bin/bash
                 sudo yum update -y
@@ -34,6 +32,7 @@ resource "aws_instance" "echo_server" {
 
 resource "aws_security_group" "echo_server" {
     vpc_id = var.vpc_id
+    name_prefix = "echo-server-ingress"
     ingress {
         from_port = 0
         to_port = 0

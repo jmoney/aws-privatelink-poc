@@ -55,16 +55,13 @@ module "consumer" {
 
 #### Below is everything needed to access the consumer network via the public internet
 
-resource "aws_internet_gateway" "internet" {
-    vpc_id = module.consumer_network.vpc_id
-}
-
 resource "aws_lb" "public_lb" {
     name = "public-lb"
     internal = false
     load_balancer_type = "application"
     subnets = [for az, subnet in module.consumer_network.subnet_ids["public"] : subnet]
     enable_deletion_protection = false
+    enable_cross_zone_load_balancing = true
 }
 
 resource "aws_lb_listener" "public_lb" {
@@ -88,11 +85,11 @@ resource "aws_lb_target_group" "public_lb" {
     health_check {
         path = "/http"
         protocol = "HTTP"
-        port = "9001"
+        port = "80"
         interval = 30
         timeout = 5
-        healthy_threshold = 2
-        unhealthy_threshold = 2
+        healthy_threshold = 3
+        unhealthy_threshold = 3
     }
 }
 
