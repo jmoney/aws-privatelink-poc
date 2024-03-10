@@ -16,3 +16,7 @@ output "private_link_vpcs" {
 output "provider_service_name" {
     value = module.provider.service_name
 }
+
+output "echo_server_id" {
+    value = module.echo_server.instance_id
+}
