@@ -4,17 +4,12 @@ data "aws_subnet" "subnet" {
 
 resource "aws_security_group" "private_link_provider" {
     vpc_id = data.aws_subnet.subnet.vpc_id
+    name = "private-link-provider"
     egress {
         from_port = 0
         to_port = 0
         protocol = "-1"
         cidr_blocks = [data.aws_subnet.subnet.cidr_block]
-    }
-    ingress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        cidr_blocks = [var.cidr_block]
     }
 }
 
@@ -23,6 +18,7 @@ resource "aws_lb" "private_link_provider" {
     internal = true
     load_balancer_type = "network"
     subnets = var.subnet_ids
+    security_groups = [aws_security_group.private_link_provider.id]
     enable_deletion_protection = false
     enable_cross_zone_load_balancing = true
 }

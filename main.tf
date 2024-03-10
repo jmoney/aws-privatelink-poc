@@ -43,7 +43,6 @@ module "provider" {
     source = "./modules/provider"
     subnet_ids = [for az, subnet in module.provider_network.subnet_ids["private"] : subnet]
     instance_ip = module.echo_server.instance_ip
-    cidr_block = var.provider_ingress_cidr_block
 }
 
 module "consumer" {
@@ -122,4 +121,14 @@ resource "aws_lb_target_group_attachment" "consumers" {
     target_group_arn = aws_lb_target_group.public_lb.arn
     target_id = data.aws_network_interface.consumer_network_interface[count.index].private_ip
     port = 80
+}
+
+resource "aws_security_group_rule" "private_link_provider_ingress" {
+    count = (var.open_provider_ingress ? 1 : length(data.aws_network_interface.consumer_network_interface))
+    type = "ingress"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    security_group_id = module.provider.provider_security_group_id
+    cidr_blocks = (var.open_provider_ingress ? ["10.0.0.0/8"] : [format("%s/32", data.aws_network_interface.consumer_network_interface[count.index].private_ip)])
 }

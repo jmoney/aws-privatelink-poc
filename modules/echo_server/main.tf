@@ -16,7 +16,7 @@ data "aws_vpc" "vpc" {
 }
 
 resource "aws_iam_role" "echo_server" {
-    name_prefix = "echo_server_role"
+    name = "echo_server_role"
     assume_role_policy = jsonencode({
         Version = "2012-10-17",
         Statement = [
@@ -33,25 +33,10 @@ resource "aws_iam_role" "echo_server" {
     managed_policy_arns = [
         "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
     ]
-
-    # inline_policy {
-    #     name = "echo-server-policy"
-    #     policy = jsonencode({
-    #         Version = "2012-10-17",
-    #         Statement = [
-    #             {
-    #                 Action = "kms:GenerateDataKey",
-    #                 Effect = "Allow",
-    #                 Resource = "*"
-    #             }
-    #         ]
-    #     })
-    # }
-
 }
 
 resource "aws_iam_instance_profile" "echo_server" {
-    name_prefix = "echo_server_profile"
+    name = "echo_server_profile"
     role = aws_iam_role.echo_server.name
 }
 
@@ -59,7 +44,7 @@ resource "aws_instance" "echo_server" {
     ami = data.aws_ami.amazon_linux_2023.id
     instance_type = "t3.micro"
     subnet_id = var.subnet_id
-    security_groups = [aws_security_group.echo_server.id]
+    vpc_security_group_ids = [aws_security_group.echo_server.id]
 
     iam_instance_profile = aws_iam_instance_profile.echo_server.name
 
@@ -76,7 +61,8 @@ resource "aws_instance" "echo_server" {
 
 resource "aws_security_group" "echo_server" {
     vpc_id = var.vpc_id
-    name_prefix = "echo-server-ingress"
+    name = "echo-server-ingress"
+
     ingress {
         from_port = 0
         to_port = 0

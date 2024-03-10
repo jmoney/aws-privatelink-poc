@@ -1,5 +1,5 @@
-variable "provider_ingress_cidr_block" {
-    description = "The CIDR block for the ingress rule of the provider load balancer"
-    type        = string
-    default = "10.0.0.0/8"
+variable "open_provider_ingress" {
+    description = "Whether or not to open the provider ingress rule or lock down to consumer ips"
+    type        = bool
+    default     = true
 }
