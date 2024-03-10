@@ -58,8 +58,8 @@ aws ssm start-session --target $(terraform output -json | jq -r .echo_server_id)
 
 | Name | Description |
 |------|-------------|
-| <a name="output_consumer_ips"></a> [consumer\_ips](#output\_consumer\_ips) | n/a |
-| <a name="output_echo_server_id"></a> [echo\_server\_id](#output\_echo\_server\_id) | n/a |
-| <a name="output_private_link_vpcs"></a> [private\_link\_vpcs](#output\_private\_link\_vpcs) | n/a |
-| <a name="output_provider_service_name"></a> [provider\_service\_name](#output\_provider\_service\_name) | n/a |
-| <a name="output_public_lb_dns"></a> [public\_lb\_dns](#output\_public\_lb\_dns) | n/a |
+| <a name="output_consumer_ips"></a> [consumer\_ips](#output\_consumer\_ips) | IP addresses of the consumer network interfaces |
+| <a name="output_echo_server_id"></a> [echo\_server\_id](#output\_echo\_server\_id) | value of the echo server's instance ID |
+| <a name="output_private_link_vpcs"></a> [private\_link\_vpcs](#output\_private\_link\_vpcs) | VPC IDs of the provider and consumer networks |
+| <a name="output_provider_service_name"></a> [provider\_service\_name](#output\_provider\_service\_name) | value of the provider service name |
+| <a name="output_public_lb_dns"></a> [public\_lb\_dns](#output\_public\_lb\_dns) | value of the public load balancer's DNS name |
