@@ -55,11 +55,30 @@ module "consumer" {
 
 #### Below is everything needed to access the consumer network via the public internet
 
+resource "aws_security_group" "public_lb" {
+    name = "public-lb"
+    vpc_id = module.consumer_network.vpc_id
+    egress {
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_blocks = ["10.1.0.0/16"]
+    }
+
+    ingress {
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+}
+
 resource "aws_lb" "public_lb" {
     name = "public-lb"
     internal = false
     load_balancer_type = "application"
     subnets = [for az, subnet in module.consumer_network.subnet_ids["public"] : subnet]
+    security_groups = [aws_security_group.public_lb.id]
     enable_deletion_protection = false
     enable_cross_zone_load_balancing = true
 }
