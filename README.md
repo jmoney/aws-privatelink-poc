@@ -1,6 +1,24 @@
 # private-link-poc
 
-This is a POC to demonstrate an issue with AWS PrivateLink.  The issue is that when the security group on the network load balancer for this provider is locked down to the consumer ip addresses there is a gateway timeout through a LB.  When the security group on the NLB is set to be more open, as in using 10.0.0.0/8 as the CIDR, then it works correctly.
+This is a POC to demonstrate an issue with AWS PrivateLink.  The issue is that when the security group on the network load balancer for this provider is locked down to the consumer ip addresses there is a gateway timeout through a LB.  The security group of the NLB needs to be set further upstream to the source IP addresses, in this case the private IPs of the ALB, rather than the consumer IPs.
+
+## Setup
+
+```bash
+terraform init
+terraform apply -var input_provider_ingress="alb"
+```
+
+This will create a public ALB pointed at a VPC endpoint mapped to an NLB via a VPC Endpoint Service.  The NLB is pointed at an instance running a simple echo server.  The security group on the NLB is locked down to the ALB private IPs.
+
+```bash
+terraform init
+terraform apply -var input_provider_ingress="consumers"
+```
+
+This will create a public ALB pointed at a VPC endpoint mapped to an NLB via a VPC Endpoint Service.  The NLB is pointed at an instance running a simple echo server.  The security group on the NLB is locked down to the consumer private IPs.
+
+## Testing
 
 To test this POC, you can run the following command:
 
@@ -46,13 +64,15 @@ aws ssm start-session --target $(terraform output -json | jq -r .echo_server_id)
 | [aws_lb_target_group_attachment.consumers](https://registry.terraform.io/providers/hashicorp/aws/5.40.0/docs/resources/lb_target_group_attachment) | resource |
 | [aws_security_group.public_lb](https://registry.terraform.io/providers/hashicorp/aws/5.40.0/docs/resources/security_group) | resource |
 | [aws_security_group_rule.private_link_provider_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.40.0/docs/resources/security_group_rule) | resource |
+| [aws_network_interface.alb_eni](https://registry.terraform.io/providers/hashicorp/aws/5.40.0/docs/data-sources/network_interface) | data source |
 | [aws_network_interface.consumer_network_interface](https://registry.terraform.io/providers/hashicorp/aws/5.40.0/docs/data-sources/network_interface) | data source |
+| [aws_network_interfaces.alb_enis](https://registry.terraform.io/providers/hashicorp/aws/5.40.0/docs/data-sources/network_interfaces) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_open_provider_ingress"></a> [open\_provider\_ingress](#input\_open\_provider\_ingress) | Whether or not to open the provider ingress rule or lock down to consumer ips | `bool` | `true` | no |
+| <a name="input_provider_ingress"></a> [provider\_ingress](#input\_provider\_ingress) | Where to grab the IPs for the NLB provider security group. | `string` | `"alb"` | no |
 
 ## Outputs
 

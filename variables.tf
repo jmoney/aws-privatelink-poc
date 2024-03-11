@@ -1,5 +1,9 @@
-variable "open_provider_ingress" {
-    description = "Whether or not to open the provider ingress rule or lock down to consumer ips"
-    type        = bool
-    default     = true
+variable "provider_ingress" {
+    description = "Where to grab the IPs for the NLB provider security group."
+    validation {
+        condition = contains(["alb", "consumers"], var.provider_ingress)
+        error_message = "Options include alb or consumers"
+    }
+    type        = string
+    default     = "alb"
 }

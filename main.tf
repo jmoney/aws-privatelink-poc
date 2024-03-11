@@ -19,6 +19,7 @@ provider "aws" {
 
 locals {
     availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+    alb_ips = ["10.1.78.127", "10.1.92.130", "10.1.60.27"]
 }
 
 module "provider_network" {
@@ -53,6 +54,18 @@ module "consumer" {
 }
 
 #### Below is everything needed to access the consumer network via the public internet
+
+data "aws_network_interfaces" "alb_enis" {
+    filter {
+        name = "group-id"
+        values = [aws_security_group.public_lb.id]
+    }
+}
+
+data "aws_network_interface" "alb_eni" {
+    count = length(data.aws_network_interfaces.alb_enis.ids)
+    id = data.aws_network_interfaces.alb_enis.ids[count.index]
+}
 
 resource "aws_security_group" "public_lb" {
     name = "public-lb"
@@ -124,11 +137,12 @@ resource "aws_lb_target_group_attachment" "consumers" {
 }
 
 resource "aws_security_group_rule" "private_link_provider_ingress" {
-    count = (var.open_provider_ingress ? 1 : length(data.aws_network_interface.consumer_network_interface))
+    # count = (var.open_provider_ingress ? 1 : length(data.aws_network_interface.consumer_network_interface))
+    count = (var.provider_ingress == "alb") ? length(data.aws_network_interface.alb_eni) : (var.provider_ingress == "consumer" ? length(data.aws_network_interface.consumer_network_interface) : 0)
     type = "ingress"
     from_port = 0
     to_port = 0
     protocol = "-1"
     security_group_id = module.provider.provider_security_group_id
-    cidr_blocks = (var.open_provider_ingress ? ["10.0.0.0/8"] : [format("%s/32", data.aws_network_interface.consumer_network_interface[count.index].private_ip)])
+    cidr_blocks = (var.provider_ingress == "alb") ? [format("%s/32", data.aws_network_interface.alb_eni[count.index].private_ip)] : (var.provider_ingress == "consumer" ? [format("%s/32", data.aws_network_interface.consumer_network_interface[count.index].private_ip)] : 0)
 }
